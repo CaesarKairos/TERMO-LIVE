@@ -19,7 +19,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-REM 2) Crear .venv si no existe
+REM 2) Criar .venv se não existir
 if not exist ".venv" (
     echo Criando ambiente virtual...
     python -m venv .venv

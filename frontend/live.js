@@ -17,7 +17,7 @@ let numeroRodada = 1;
 let ws = null;
 let palavraDigitada = "";
 
-const $ = (id) => document.getElementById(id);
+const $ = (id) => document.getElementById(String(id).replace(/^#/, ""));
 const MAX_LINHAS = 6;
 
 // Escapar texto de usuário (anti-XSS)
@@ -40,17 +40,29 @@ function processar(msg) {
         case "victory": mostrarVencedor(msg); break;
         case "leaderboard": renderRanking(msg.ranking); break;
         case "gift": notificarPresente(msg); break;
-        case "hint": notificar(msg, msg.user || "", "💡 " + (msg.mensagem || "Pista")); break;
+        case "gift_received": notificarPresente(msg); break;
+        case "ability_started": notificar(msg, msg.username || msg.user || "", "✨ " + (msg.habilidade || "Habilidade") + " ativada"); break;
+        case "ability_completed": if (msg.mensagem) notificar(msg, msg.username || msg.user || "", msg.mensagem); break;
+        case "hint":
+        case "hint_result": notificar(msg, msg.username || msg.user || "", "💡 " + (msg.text || msg.mensagem || "Pista")); break;
         case "reveal_letter": revelarLetra(msg); break;
+        case "letter_revealed": revelarLetra(msg); break;
         case "eliminate": eliminarLetra(msg); break;
+        case "letter_eliminated": eliminarLetra(msg); break;
         case "second_chance": notificar(msg, msg.user || "", "⏳ " + (msg.mensagem || "+1 tentativa")); break;
         case "shuffle": notificar(msg, msg.user || "", "🔀 " + (msg.mensagem || "Embaralhamento")); break;
         case "radar": notificar(msg, msg.user || "", "📡 " + (msg.mensagem || "Radar")); break;
+        case "radar_result": notificar(msg, msg.username || msg.user || "", "📡 " + (msg.text || msg.mensagem || "Radar")); break;
         case "chaos": notificar(msg, msg.user || "", "🌀 " + (msg.mensagem || "Caos")); break;
+        case "chaos_started": notificar(msg, msg.username || msg.user || "", "🌀 " + (msg.text || msg.mensagem || "Caos")); break;
         case "bonus": notificar(msg, msg.user || "", "🎁 " + (msg.mensagem || "Bônus")); break;
+        case "bonus_started": atualizarBonus(msg); notificar(msg, msg.username || msg.user || "", msg.mensagem || "Bônus ativado"); break;
+        case "bonus_finished": atualizarBonus({ multiplicador: 1, restante: 0 }); break;
         case "steal_points": notificar(msg, msg.user || "", "🕵️ " + (msg.mensagem || "Roubo de pontos")); break;
         case "steal_points_result": notificar(msg, "", "🕵️ " + esc(msg.target) + " perdeu " + (msg.pts || 0) + " pontos"); break;
         case "lightning": notificar(msg, msg.user || "", "⚡ Palavra relâmpago!"); break;
+        case "lightning_started": notificar(msg, msg.username || msg.user || "", "⚡ " + (msg.text || msg.mensagem || "Palavra relâmpago!")); break;
+        case "lightning_finished": notificar(msg, "", msg.mensagem || "A palavra relâmpago terminou."); break;
         case "follow": notificar(msg, msg.user || "", "➕ te seguiu"); break;
         case "like": notificar(msg, msg.user || "", "❤️ deu like"); break;
         case "system": notificar(msg, "", msg.mensagem || ""); break;
@@ -60,7 +72,7 @@ function processar(msg) {
 function initEstado(st) {
     if (st?.rodada) {
         numeroRodada = st.rodada.numero;
-        countdown = st.rodada.relampago ? 20 : 120;
+        countdown = st.rodada.relampago ? 30 : 120;
         rodadaAtiva = true;
         $("#numRodada").textContent = numeroRodada;
     }
@@ -68,11 +80,12 @@ function initEstado(st) {
     revealed = {};
     for (const i of (st?.reveladas || [])) revealed[i] = "";
     eliminated = new Set(st?.eliminadas || []);
-    renderTabuleiro();
+        renderTabuleiro();
     renderRanking(st?.ranking || []);
     if (st?.ranking && st.ranking.length) renderUltimos(st.ranking.slice(0, 6));
     atualizarTeclado();
     atualizarStatus();
+    atualizarBonus(st?.bonus || {});
 }
 
 function novaRodada(msg) {
@@ -84,7 +97,7 @@ function novaRodada(msg) {
     numeroRodada = msg.round?.numero || numeroRodada + 1;
     $("#numRodada").textContent = numeroRodada;
     ocultarAviso();
-    renderTabuleiro();
+        renderTabuleiro();
     $("#ultimo").innerHTML = '<span class="texto-vazio">Aguardando palpites no chat...</span>';
     $("#ultimos").innerHTML = "";
     palavraDigitada = "";
@@ -180,6 +193,18 @@ function atualizarStatus() {
     if (palpite) palpite.textContent = palavraDigitada ? "Palavra: " + palavraDigitada : "Aguardando palpites do chat";
 }
 
+function atualizarBonus(bonus) {
+    const indicador = $("bonusStatus");
+    if (!indicador) return;
+    if (bonus.ativo || (bonus.multiplicador && bonus.multiplicador > 1)) {
+        indicador.textContent = "×" + bonus.multiplicador + " PONTOS";
+        indicador.classList.add("ativo");
+    } else {
+        indicador.textContent = "";
+        indicador.classList.remove("ativo");
+    }
+}
+
 function renderUltimos(lista) {
     const ul = $("#ultimos");
     ul.innerHTML = "";
@@ -225,13 +250,13 @@ function ocultarAviso() {
 // ------------------------------------------------------------
 function revelarLetra(msg) {
     revealed[msg.pos] = msg.letra;
-    notificar(msg, msg.user || "", "🔎 " + (msg.mensagem || "Letra revelada: " + msg.letra));
+    notificar(msg, msg.username || msg.user || "", "🔎 " + (msg.text || msg.mensagem || "Letra revelada: " + msg.letra));
     renderTabuleiro();
 }
 
 function eliminarLetra(msg) {
     if (msg.letra) eliminated.add(String(msg.letra).toLowerCase());
-    notificar(msg, msg.user || "", "🚫 " + (msg.mensagem || "Letra eliminada"));
+    notificar(msg, msg.username || msg.user || "", "🚫 " + (msg.text || msg.mensagem || "Letra eliminada"));
     renderTabuleiro();
 }
 
@@ -258,8 +283,8 @@ function notificarPresente(msg) {
     if (!cont) return;
     const n = document.createElement("div");
     n.className = "notif";
-    const q = document.createElement("span"); q.className = "quem"; q.textContent = esc(msg.user || "") + " enviou " + esc(msg.presente || "");
-    const t = document.createElement("span"); t.className = "titulo"; t.textContent = esc(msg.habilidade || "");
+    const q = document.createElement("span"); q.className = "quem"; q.textContent = esc(msg.username || msg.user || "") + " enviou " + esc(msg.gift_name || msg.presente || "");
+    const t = document.createElement("span"); t.className = "titulo"; t.textContent = esc(msg.habilidade || msg.mensagem || "");
     n.appendChild(q); n.appendChild(t);
     cont.prepend(n);
     while (cont.children.length > 4) cont.removeChild(cont.lastChild);
@@ -305,10 +330,10 @@ document.addEventListener("keydown", (evento) => {
 });
 
 const alternarPainel = (id) => $(id)?.classList.toggle("aberto");
-$("#botaoRanking").addEventListener("click", () => alternarPainel("#painelRanking"));
-$("#botaoStatus").addEventListener("click", () => alternarPainel("#painelStatus"));
+$("botaoRanking").addEventListener("click", () => alternarPainel("painelRanking"));
+$("botaoStatus").addEventListener("click", () => alternarPainel("painelStatus"));
 document.querySelectorAll(".fechar-painel").forEach((botao) => botao.addEventListener("click", () => {
     botao.closest("aside")?.classList.remove("aberto");
     botao.closest("dialog")?.close();
 }));
-$("#botaoAjuda").addEventListener("click", () => $("#modalAjuda").showModal());
+$("botaoAjuda").addEventListener("click", () => $("modalAjuda").showModal());

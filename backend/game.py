@@ -67,6 +67,7 @@ class Round:
 
     def to_dict(self):
         return {
+            "round_id": self.numero,
             "numero": self.numero,
             "palavra": self.palavra,
             "max_tentativas": self.max_tentativas,

@@ -77,6 +77,14 @@ def _local_only(request: Request):
         raise HTTPException(status_code=403, detail="Somente local")
 
 
+def _test_only():
+    if not config.test_mode:
+        raise HTTPException(
+            status_code=403,
+            detail="Modo teste desativado. Defina TEST_MODE=true no .env e reinicie o servidor.",
+        )
+
+
 # ------------------------------------------------------------
 #  Rotas de páginas
 # ------------------------------------------------------------
@@ -178,6 +186,13 @@ class AbilityBody(BaseModel):
     enabled: bool = True
 
 
+class GiftConfigBody(BaseModel):
+    gift: str = ""
+    action: str = ""
+    enabled: bool = True
+    cooldown: float | None = None
+
+
 def _uinfo(b: BaseModel, default_id: str):
     return {
         "unique_id": (b.user or default_id),
@@ -192,30 +207,35 @@ def _uinfo(b: BaseModel, default_id: str):
 @app.post("/api/test/guess")
 async def test_guess(body: GuessBody, request: Request):
     _local_only(request)
+    _test_only()
     return await manager.handle_palpite(_uinfo(body, "test"), body.word)
 
 
 @app.post("/api/test/gift")
 async def test_gift(body: GiftBody, request: Request):
     _local_only(request)
+    _test_only()
     return await manager.handle_gift(body.gift, _uinfo(body, "test"))
 
 
 @app.post("/api/test/follow")
 async def test_follow(body: UserBody, request: Request):
     _local_only(request)
+    _test_only()
     return await manager.handle_follow(_uinfo(body, "test"))
 
 
 @app.post("/api/test/like")
 async def test_like(body: UserBody, request: Request):
     _local_only(request)
+    _test_only()
     return await manager.handle_like(_uinfo(body, "test"))
 
 
 @app.post("/api/test/comment")
 async def test_comment(body: GuessBody, request: Request):
     _local_only(request)
+    _test_only()
     return await manager.handle_comment(_uinfo(body, "test"), body.word)
 
 
@@ -282,6 +302,36 @@ async def admin_limpar(request: Request):
 async def admin_testar_presente(body: GiftBody, request: Request):
     _local_only(request)
     return await manager.handle_gift(body.gift, _uinfo(body, "admin"))
+
+
+@app.get("/api/admin/gifts")
+async def admin_gifts(request: Request):
+    _local_only(request)
+    return {
+        "cooldown": config.data.get("gifts", {}).get("cooldown", 1),
+        "streak_mode": config.data.get("gifts", {}).get("streak_mode", "final"),
+        "acoes": manager.gifts.available_actions(),
+        "gifts": [
+            {"nome": name, "habilidade": manager.gifts.label_for(manager.gifts.normalize_action(cfg)),
+             "action": manager.gifts.normalize_action(cfg), "ativo": bool(cfg.get("enabled", True))}
+            for name, cfg in manager.gifts.gifts.items()
+        ],
+    }
+
+
+@app.post("/api/admin/gifts/config")
+async def admin_configurar_gift(body: GiftConfigBody, request: Request):
+    _local_only(request)
+    if body.cooldown is not None and not body.gift:
+        config.data.setdefault("gifts", {})["cooldown"] = max(0, body.cooldown)
+        return {"ok": True, "cooldown": config.data["gifts"]["cooldown"]}
+    cfg = manager.gifts.gifts.get(body.gift)
+    if cfg is None:
+        return {"ok": False, "motivo": "presente-nao-configurado"}
+    if body.action:
+        cfg["action"] = body.action
+    cfg["enabled"] = body.enabled
+    return {"ok": True, "presente": body.gift, "action": manager.gifts.normalize_action(cfg), "ativo": cfg["enabled"]}
 
 
 @app.post("/api/admin/habilidade")

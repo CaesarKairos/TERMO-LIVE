@@ -17,7 +17,7 @@ python backend/main.py      ou      start.bat
 
 Abrir: http://127.0.0.1:8000/live
 
-## Configuracion
+## Configuração
 
 | Arquivo           | Para que serve                      |
 |-------------------|--------------------------------------|
@@ -33,6 +33,10 @@ Com `TEST_MODE=true` no `.env`, em `/admin`:
 ```
 /palpite TERMO     /presente Rose     /seguir Cesar     /curtida Cesar
 ```
+
+Depois de alterar o `.env`, reinicie o servidor. No painel `/admin`, use o campo
+de comando para enviar um palpite ou clique em **Simular 20 palpites**. Esses
+testes passam pelo mesmo fluxo de comentários usado pelo TikTok LIVE.
 
 ## Páginas
 
@@ -55,7 +59,12 @@ Com `TEST_MODE=true` no `.env`, em `/admin`:
 | `chaos`          | Caos                |
 | `bonus`          | Bônus               |
 | `steal_points`   | Roubo de pontos     |
-| `lightning`      | Palavra relámpago   |
+| `lightning`      | Palavra relâmpago   |
+| `points`         | +10 pontos          |
+| `super_hint`     | Super pista         |
+| `double_ability` | Dupla habilidade    |
+| `total_chaos`    | Caos total          |
+| `legendary_event`| Evento lendário     |
 
 ## Arquitetura
 

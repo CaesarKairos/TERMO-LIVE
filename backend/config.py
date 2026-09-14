@@ -27,7 +27,7 @@ DEFAULTS = {
         "arquivo_palavras": "data/words.txt",
         "intervalo_entre_rodadas": 8,
         "duracao_rodada": 120,
-        "duracao_relampago": 20,
+        "duracao_relampago": 30,
         "pontos_acerto": 100,
         "pontos_por_tentativa": 10,
     },

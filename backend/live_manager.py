@@ -1,7 +1,7 @@
 # ============================================================
 #  live_manager.py
 #  Orquestrador do jogo: gerencia as rodadas infinitas, a fila de
-#  palpites, o ranking, os presentes e a difusión por WebSocket.
+#  palpites, o ranking, os presentes e a difusão por WebSocket.
 #
 #  A busca de rodadas é executada em uma asyncio.Task de fundo.
 #  Nenhum evento externo (comentário, presente, desconexão)
@@ -42,6 +42,8 @@ class LiveManager:
 
         self.revealed_positions = set()
         self.eliminated_letters = set()
+        self._bonus_multiplier = 1
+        self._bonus_until = 0.0
 
         # Sinalizadores de controle da rodada
         self._end_event = asyncio.Event()
@@ -49,6 +51,12 @@ class LiveManager:
         self._skip_wait = False
         self._lightning_pending = False
         self._manual_word = None
+        self._gift_lock = asyncio.Lock()
+        self._gift_cooldowns = {}
+        self._bonus_multiplier = 1
+        self._bonus_until = 0.0
+        self._bonus_task = None
+        self.base_max_tentativas = config.game.get("max_tentativas", 6)
 
         self.stats = {
             "total_comentarios": 0,
@@ -97,10 +105,56 @@ class LiveManager:
     def add_points(self, player, delta):
         player.pontos = max(0, player.pontos + delta)
 
+    def current_multiplier(self):
+        return self._bonus_multiplier if self._bonus_until > time.time() else 1
+
+    async def ability_event(self, event_type, player, ability, text, **extra):
+        if self.round is None:
+            return
+        payload = {
+            "type": event_type,
+            "round_id": self.round.numero,
+            "username": player.display_name() if player else "",
+            "user": player.display_name() if player else "",
+            "ability": ability,
+            "habilidade": self.gifts.label_for(ability),
+            "text": text,
+            "mensagem": text,
+        }
+        payload.update(extra)
+        await self.broadcast(payload)
+
+    async def start_bonus(self, multiplier, seconds, player=None):
+        self._bonus_multiplier = max(1, int(multiplier))
+        self._bonus_until = time.time() + max(1, int(seconds))
+        await self.broadcast({
+            "type": "bonus_started",
+            "round_id": self.round.numero if self.round else None,
+            "username": player.display_name() if player else "",
+            "ability": "bonus",
+            "multiplicador": self._bonus_multiplier,
+            "duracao": seconds,
+            "mensagem": f"×{self._bonus_multiplier} pontos por {seconds} segundos!",
+        })
+        if self._bonus_task and not self._bonus_task.done():
+            self._bonus_task.cancel()
+        self._bonus_task = asyncio.create_task(self._finish_bonus(self._bonus_until))
+
+    async def _finish_bonus(self, deadline):
+        try:
+            await asyncio.sleep(max(0, deadline - time.time()))
+            if self._bonus_until <= deadline:
+                self._bonus_multiplier = 1
+                self._bonus_until = 0
+                await self.broadcast({"type": "bonus_finished", "mensagem": "O multiplicador terminou."})
+        except asyncio.CancelledError:
+            pass
+
     # --------------------------------------------------------
     #  Estado
     # --------------------------------------------------------
     def state(self):
+        bonus_ativo = self._bonus_until > time.time()
         return {
             "rodada": self.round.to_dict() if self.round else None,
             "contador": self.round_counter,
@@ -113,6 +167,9 @@ class LiveManager:
             "modo_test": self.config.test_mode,
             "stats": self.stats,
             "habilidades": self.gifts.available_actions(),
+            "bonus": {"ativo": bonus_ativo,
+                       "multiplicador": self._bonus_multiplier if bonus_ativo else 1,
+                       "restante": max(0, int(self._bonus_until - time.time())) if bonus_ativo else 0},
             "palavras": {"total": self.words.total},
         }
 
@@ -134,7 +191,7 @@ class LiveManager:
         self.round.relampago = relampago
         self.round.iniciada_ts = time.time()
         self._round_ttl = (
-            self.config.game.get("duracao_relampago", 20)
+            self.config.game.get("duracao_relampago", 30)
             if relampago
             else self.config.game.get("duracao_rodada", 120)
         )
@@ -189,6 +246,9 @@ class LiveManager:
         else:
             data["mensagem"] = f"A palavra era {r.palavra.upper()}."
         await self.broadcast(data)
+        if r.relampago:
+            await self.broadcast({"type": "lightning_finished", "round_id": r.numero,
+                                  "mensagem": "A palavra relâmpago terminou."})
         await self.broadcast({"type": "leaderboard", "ranking": self.players.ranking(10)})
 
     # --------------------------------------------------------
@@ -243,7 +303,7 @@ class LiveManager:
             player.vitorias += 1
             base = self.config.game.get("pontos_acerto", 100)
             per = self.config.game.get("pontos_por_tentativa", 10)
-            pts = max(10, base - (player.tentativas - 1) * per)
+            pts = max(10, base - (player.tentativas - 1) * per) * self.current_multiplier()
             self.add_points(player, pts)
             await self.broadcast({"type": "guess", "palpite": info})
             await self.broadcast({"type": "correct", "palpite": info, "pts": pts})
@@ -276,7 +336,7 @@ class LiveManager:
         value = " ".join(parts[1:]) if len(parts) > 1 else ""
         if cmd in ("guess", "palpite"):
             return await self.handle_palpite(user_info, value)
-        if cmd == "gift":
+        if cmd in ("gift", "presente"):
             return await self.handle_gift(value, user_info)
         if cmd == "follow":
             return await self.handle_follow(user_info)
@@ -296,20 +356,44 @@ class LiveManager:
             user_info.get("avatar", ""),
         )
         player.presentes += 1
-        cfg = self.gifts.config_for(gift_name)
-        if gift_name and (not cfg or not cfg.get("enabled")):
-            await self.broadcast({"type": "gift", "presente": gift_name,
-                                  "user": player.display_name(), "ativado": False})
-            return {"ok": False, "motivo": "desativado"}
         if not gift_name:
             return {"ok": False, "motivo": "sem-presente"}
-
-        await self.broadcast({"type": "gift", "presente": gift_name,
-                              "user": player.display_name(),
-                              "habilidade": self.gifts.label_for(cfg.get("action", ""))})
-        await self.gifts.trigger(self, gift_name, player, streak=streak)
-        player.habilidades += 1
-        return {"ok": True}
+        cfg = self.gifts.config_for(gift_name)
+        round_id = self.round.numero if self.round else None
+        if not cfg:
+            log.warning("Presente não configurado: %s | usuário=%s | sequência=%s",
+                        gift_name, player.display_name(), streak)
+            await self.broadcast({"type": "gift_received", "round_id": round_id,
+                                  "username": player.display_name(), "gift_name": gift_name,
+                                  "presente": gift_name, "configurado": False,
+                                  "mensagem": f"Presente não configurado: {gift_name}"})
+            return {"ok": False, "motivo": "nao-configurado"}
+        cooldown = float(self.config.data.get("gifts", {}).get("cooldown", 1))
+        cooldown_key = (player.unique_id, gift_name)
+        now = time.monotonic()
+        if now - self._gift_cooldowns.get(cooldown_key, 0) < cooldown:
+            return {"ok": False, "motivo": "cooldown"}
+        self._gift_cooldowns[cooldown_key] = now
+        action = self.gifts.normalize_action(cfg)
+        await self.broadcast({"type": "gift_received", "round_id": round_id,
+                              "username": player.display_name(), "user": player.display_name(),
+                              "gift_name": gift_name, "presente": gift_name,
+                              "ability": action, "habilidade": self.gifts.label_for(action),
+                              "streak": streak, "configurado": True})
+        if not cfg.get("enabled", True):
+            return {"ok": False, "motivo": "desativado"}
+        async with self._gift_lock:
+            if self.round is None or self.round.numero != round_id:
+                return {"ok": False, "motivo": "rodada-inativa"}
+            await self.broadcast({"type": "ability_started", "round_id": round_id,
+                                  "username": player.display_name(), "ability": action,
+                                  "habilidade": self.gifts.label_for(action)})
+            await self.gifts.trigger(self, gift_name, player, streak=streak)
+            player.habilidades += 1
+        await self.broadcast({"type": "ability_completed", "round_id": round_id,
+                              "username": player.display_name(), "ability": action,
+                              "habilidade": self.gifts.label_for(action)})
+        return {"ok": True, "habilidade": action}
 
     async def handle_follow(self, user_info):
         self.stats["total_follows"] += 1

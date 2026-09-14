@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="pagina-admin">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,7 +17,7 @@
         </section>
 
         <section>
-            <h2>Control da rodada</h2>
+            <h2>Controle da rodada</h2>
             <button onclick="post('/api/admin/nova-round')">Nova rodada</button>
             <button onclick="post('/api/admin/pausar')">Pausar</button>
             <button onclick="post('/api/admin/continuar')">Continuar</button>
@@ -42,18 +42,24 @@
 
         <section>
             <h2>Presentes / habilidades</h2>
+            <p>Comentários continuam sendo palpites. Presentes ativam habilidades especiais.</p>
+            <div id="giftsConfig">Carregando presentes...</div>
+            <div class="gift-cooldown">Cooldown dos presentes (segundos): <input id="giftCooldown" type="number" min="0" step="0.1" value="1"><button type="button" onclick="salvarCooldown()">Salvar</button></div>
             <p>Testar um presente:</p>
             <select id="giftSel">
                 <option value="Rose">Rose</option>
                 <option value="Heart">Heart</option>
-                <option value="GG">GG</option>
-                <option value="Dice">Dice</option>
-                <option value="Badge">Badge</option>
-                <option value="Thor">Thor</option>
-                <option value="Crown">Crown</option>
-                <option value="Pandora">Pandora</option>
-                <option value="Silver">Silver</option>
-                <option value="Zone">Zone</option>
+                <option value="Finger Heart">Finger Heart</option>
+                <option value="Rosa">Rosa</option>
+                <option value="Perfume">Perfume</option>
+                <option value="Doughnut">Doughnut</option>
+                <option value="Night Star">Night Star</option>
+                <option value="Money Gun">Money Gun</option>
+                <option value="Galaxy">Galaxy</option>
+                <option value="Fireworks">Fireworks</option>
+                <option value="Party Laser">Party Laser</option>
+                <option value="Meteor Shower">Meteor Shower</option>
+                <option value="Private Jet">Private Jet</option>
             </select>
             <button onclick="post('/api/admin/testar-presente', {gift: el('giftSel').value})">Enviar teste</button>
         </section>
@@ -65,7 +71,9 @@
 
         <section class="test-panel">
             <h2>Modo teste (simular comentários)</h2>
-            <input id="cmd" placeholder="/guess TERMO" style="width: 18rem;">
+            <p>Com <code>TEST_MODE=true</code>, o TikTok fica desativado e os testes abaixo passam pelo mesmo fluxo de comentários do jogo.</p>
+            <div id="testModeStatus">Verificando modo teste...</div>
+            <input id="cmd" placeholder="/palpite TERMO" style="width: 18rem;">
             <button onclick="enviarComando()">Enviar</button>
             <br>
             <button onclick="simular()">Simular 20 palpites</button>

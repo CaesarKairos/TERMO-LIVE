@@ -24,6 +24,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body { height: 100%; overflow: hidden; }
+html.pagina-admin { height: auto; min-height: 100%; overflow-x: hidden; overflow-y: auto; }
 
 body.live {
     height: 100vh;
@@ -205,6 +206,10 @@ body.live {
 
 /* ================= ADMIN ================= */
 body.admin {
+    min-height: 100vh;
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
     background: #15151a; color: #e9ecf2;
     font-family: system-ui, sans-serif;
 }
@@ -219,6 +224,13 @@ body.admin {
 .admin-molde button { cursor: pointer; background: #2a3c56; }
 .admin-stats { font-size: .98rem; white-space: pre-wrap; }
 .test-panel { border: 2px dashed var(--acento); }
+.test-panel p { margin: .5rem 0; color: #b9bdc8; }
+.gift-config { display: grid; grid-template-columns: minmax(8rem, 1fr) minmax(8rem, 1.3fr) auto auto; gap: .45rem; align-items: center; padding: .35rem 0; border-bottom: 1px solid #2d2e35; font-size: .82rem; }
+.gift-config span { color: #cbd0da; }.gift-config em { color: #78c894; font-style: normal; }.gift-config button { margin: 0; padding: .25rem .45rem; font-size: .78rem; }
+.gift-config select { margin: 0; padding: .25rem; font-size: .78rem; }.gift-cooldown { margin-top: .6rem; font-size: .82rem; }
+.teste-ativo, .teste-inativo { margin: .5rem 0; font-weight: 700; }
+.teste-ativo { color: #78c894; }
+.teste-inativo { color: #e39a9a; }
 #testLog {
     font-family: ui-monospace, monospace; font-size: .85rem;
     background: #14151a; white-space: pre-wrap; max-height: 12rem; overflow-y: auto;
@@ -316,9 +328,12 @@ body.live .celula {
     font-size: clamp(1.15rem, 5vh, 3rem);
     font-weight: 600;
 }
+body.live .celula.correct,
 body.live .celula.correta { background: var(--verde-jogo); border-color: var(--verde-jogo); }
+body.live .celula.present,
 body.live .celula.presente { background: var(--amarelo-jogo); border-color: var(--amarelo-jogo); }
-body.live .celula.ausente { background: rgba(75, 65, 69, .52); border-color: transparent; }
+body.live .celula.absent,
+body.live .celula.ausente { background: var(--vermelho-jogo); border-color: transparent; }
 body.live .celula.revelada { outline: .12em solid #e4a2b8; }
 body.live .linha.nova { animation: entrar .2s ease; }
 
@@ -417,3 +432,5 @@ body.live .aviso .cartel { border: 0; border-radius: .35rem; background: #312a2c
     .linha-teclas { gap: .2rem; }
     .linha-central { padding-left: .5rem; }
 }
+.bonus-status { min-width: 0; color: #ead6a3; font-size: .7rem; font-weight: 700; white-space: nowrap; }
+.bonus-status.ativo { animation: destacar .6s ease; }
