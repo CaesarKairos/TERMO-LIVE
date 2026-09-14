@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TERMO LIVE</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="live">
+
+    <!-- ================= CABECERA compacta ================= -->
+    <body class="live">
+        <header class="topo">
+            <div class="topo-lateral topo-esquerda">
+                <button class="botao-icone" type="button" aria-label="Abrir ranking" title="Abrir ranking" id="botaoRanking">↑</button>
+                <button class="botao-icone" type="button" aria-label="Ajuda" title="Ajuda" id="botaoAjuda">?</button>
+            </div>
+            <h1 class="titulo">TERMO <span>LIVE</span></h1>
+            <div class="topo-lateral topo-direita">
+                <div class="rodada-box" aria-label="Rodada atual">
+                    <span class="rotulo">RODADA</span>
+                    <span class="valor" id="numRodada">1</span>
+                </div>
+                <div class="temporizador" id="temporizador" aria-label="Tempo restante">--:--</div>
+                <button class="botao-icone" type="button" aria-label="Abrir painel de status" title="Status" id="botaoStatus">▥</button>
+            </div>
+        </header>
+
+        <main class="area-jogo">
+            <section class="tabuleiro" id="tabuleiro" aria-label="Tabuleiro do jogo"></section>
+
+            <section class="identidade" aria-live="polite">
+                <div class="ultimo" id="ultimo">
+                    <span class="texto-vazio">Aguardando palpites no chat...</span>
+                </div>
+                <ul class="lista-ultimos" id="ultimos"></ul>
+            </section>
+        </main>
+
+        <section class="teclado" aria-label="Teclado do jogo" id="teclado">
+            <div class="linha-teclas">
+                <button type="button" data-letra="Q">Q</button><button type="button" data-letra="W">W</button><button type="button" data-letra="E">E</button><button type="button" data-letra="R">R</button><button type="button" data-letra="T">T</button><button type="button" data-letra="Y">Y</button><button type="button" data-letra="U">U</button><button type="button" data-letra="I">I</button><button type="button" data-letra="O">O</button><button type="button" data-letra="P">P</button>
+            </div>
+            <div class="linha-teclas linha-central">
+                <button type="button" data-letra="A">A</button><button type="button" data-letra="S">S</button><button type="button" data-letra="D">D</button><button type="button" data-letra="F">F</button><button type="button" data-letra="G">G</button><button type="button" data-letra="H">H</button><button type="button" data-letra="J">J</button><button type="button" data-letra="K">K</button><button type="button" data-letra="L">L</button><button class="tecla-comando" type="button" data-comando="apagar" aria-label="Apagar" title="Apagar">⌫</button>
+            </div>
+            <div class="linha-teclas linha-final">
+                <button type="button" data-letra="Z">Z</button><button type="button" data-letra="X">X</button><button type="button" data-letra="C">C</button><button type="button" data-letra="V">V</button><button type="button" data-letra="B">B</button><button type="button" data-letra="N">N</button><button type="button" data-letra="M">M</button><button class="tecla-enter" type="button" data-comando="enviar">ENTER</button>
+            </div>
+        </section>
+
+        <aside class="painel-ranking" id="painelRanking" aria-label="Ranking">
+            <div class="painel-cabecalho"><h2>Ranking</h2><button class="fechar-painel" type="button" aria-label="Fechar ranking">×</button></div>
+            <ol id="listaRanking"></ol>
+        </aside>
+
+        <aside class="painel-status" id="painelStatus" aria-label="Status da rodada">
+            <div class="painel-cabecalho"><h2>Status</h2><button class="fechar-painel" type="button" aria-label="Fechar status">×</button></div>
+            <p id="statusRodada">Rodada ativa</p>
+            <p id="statusPalpite">Aguardando palpites</p>
+        </aside>
+
+        <dialog class="modal-ajuda" id="modalAjuda">
+            <button class="fechar-painel" type="button" aria-label="Fechar ajuda">×</button>
+            <h2>Como jogar</h2>
+            <p>Envie uma palavra de cinco letras no chat. As cores mostram o resultado de cada letra.</p>
+            <div class="legenda"><span class="amostra correta">A</span> posição correta <span class="amostra presente">A</span> outra posição <span class="amostra ausente">A</span> não aparece</div>
+        </dialog>
+
+    <!-- Aviso central (vencedor / nova rodada) -->
+    <div class="aviso" id="aviso"></div>
+
+    <script src="/static/live.js"></script>
+</body>
+</html>

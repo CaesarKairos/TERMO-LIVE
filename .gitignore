@@ -1,0 +1,31 @@
+# Variáveis de ambiente e segredos locais
+.env
+.env.*
+!.env.example
+
+# Ambientes virtuais e caches Python
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Logs e arquivos gerados em execução
+logs/*
+!logs/.gitkeep
+*.log
+
+# Arquivos locais do editor e do sistema operacional
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Testes, cobertura e arquivos temporários
+.pytest_cache/
+.coverage
+htmlcov/
+*.tmp
+*.temp

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TERMO LIVE - Painel</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="admin">
+    <div class="admin-molde">
+        <h1>TERMO LIVE - Painel de controle</h1>
+        <p><a href="/live" target="_blank">Abrir página /live</a> &middot; <a href="/api/state" target="_blank">Estado JSON</a></p>
+
+        <section>
+            <h2>Estado</h2>
+            <div class="admin-stats" id="stats">Carregando...</div>
+        </section>
+
+        <section>
+            <h2>Control da rodada</h2>
+            <button onclick="post('/api/admin/nova-round')">Nova rodada</button>
+            <button onclick="post('/api/admin/pausar')">Pausar</button>
+            <button onclick="post('/api/admin/continuar')">Continuar</button>
+            <button onclick="post('/api/admin/pular-palavra')">Pular palavra</button>
+            <button onclick="post('/api/admin/limpar-ranking')">Limpar ranking</button>
+            <div>
+                Palavra manual:
+                <input id="wordManual" maxlength="5" placeholder="termo">
+                <button onclick="post('/api/admin/trocar-palavra', {word: el('wordManual').value})">Usar palavra</button>
+            </div>
+            <div>
+                Duração da rodada (seg.):
+                <input id="dur" type="number" value="120" min="5">
+                <button onclick="post('/api/admin/duracao', {segundos: Number(el('dur').value)})">Definir</button>
+            </div>
+        </section>
+
+        <section>
+            <h2>Palavra atual</h2>
+            <div class="admin-stats" id="palavra">-</div>
+        </section>
+
+        <section>
+            <h2>Presentes / habilidades</h2>
+            <p>Testar um presente:</p>
+            <select id="giftSel">
+                <option value="Rose">Rose</option>
+                <option value="Heart">Heart</option>
+                <option value="GG">GG</option>
+                <option value="Dice">Dice</option>
+                <option value="Badge">Badge</option>
+                <option value="Thor">Thor</option>
+                <option value="Crown">Crown</option>
+                <option value="Pandora">Pandora</option>
+                <option value="Silver">Silver</option>
+                <option value="Zone">Zone</option>
+            </select>
+            <button onclick="post('/api/admin/testar-presente', {gift: el('giftSel').value})">Enviar teste</button>
+        </section>
+
+        <section>
+            <h2>Conexão TikTok</h2>
+            <div class="admin-stats" id="tiktok">-</div>
+        </section>
+
+        <section class="test-panel">
+            <h2>Modo teste (simular comentários)</h2>
+            <input id="cmd" placeholder="/guess TERMO" style="width: 18rem;">
+            <button onclick="enviarComando()">Enviar</button>
+            <br>
+            <button onclick="simular()">Simular 20 palpites</button>
+            <div id="testLog"></div>
+        </section>
+    </div>
+
+    <script src="/static/admin.js"></script>
+</body>
+</html>

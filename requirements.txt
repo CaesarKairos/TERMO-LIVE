@@ -1,0 +1,15 @@
+# ============================================================
+#  requirements.txt - TERMO LIVE
+#  Dependencias del backend (Python 3.11+)
+#  Instalação: pip install -r requirements.txt
+# ============================================================
+
+fastapi>=0.111
+uvicorn[standard]>=0.30
+websockets>=12
+python-dotenv>=1.0
+pydantic>=2.6
+
+# TikTokLive (opcional) para receber eventos da LIVE real.
+# Se não o instalar, o sistema funciona em modo TEST sem TikTok.
+TikTokLive>=6.2

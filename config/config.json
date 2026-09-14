@@ -1,0 +1,28 @@
+{
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8000
+  },
+  "game": {
+    "comprimento_palavra": 5,
+    "max_tentativas": 6,
+    "arquivo_palavras": "data/words.txt",
+    "intervalo_entre_rodadas": 8,
+    "duracao_rodada": 120,
+    "duracao_relampago": 20,
+    "pontos_acerto": 100,
+    "pontos_por_tentativa": 10
+  },
+  "cooldowns": {
+    "palpite_segundos": 3
+  },
+  "test": {
+    "enabled": false
+  },
+  "tiktok": {
+    "username": ""
+  },
+  "gifts": {
+    "arquivo": "config/gifts.json"
+  }
+}

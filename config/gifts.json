@@ -1,0 +1,12 @@
+{
+  "Rose": { "action": "hint", "enabled": true },
+  "Heart": { "action": "reveal_letter", "enabled": true },
+  "GG": { "action": "eliminate", "enabled": true },
+  "Dice": { "action": "shuffle", "enabled": true },
+  "Badge": { "action": "radar", "enabled": true },
+  "Thor": { "action": "chaos", "enabled": true },
+  "Crown": { "action": "bonus", "enabled": true },
+  "Pandora": { "action": "steal_points", "enabled": true },
+  "Silver": { "action": "second_chance", "enabled": true },
+  "Zone": { "action": "lightning", "enabled": true }
+}

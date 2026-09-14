@@ -1,0 +1,7 @@
+# ============================================================
+#  .gitkeep
+#  Este arquivo vazio serve para que Git conserve a carpeta
+#  "assets" no repositorio, mesmo sem conteúdo por agora.
+#  Nesta carpeta serão guardadas as imagens, os sons e outros
+#  recursos do jogo.
+# ============================================================
