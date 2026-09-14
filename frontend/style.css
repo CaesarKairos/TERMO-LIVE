@@ -228,6 +228,8 @@ body.admin {
 .gift-config { display: grid; grid-template-columns: minmax(8rem, 1fr) minmax(8rem, 1.3fr) auto auto; gap: .45rem; align-items: center; padding: .35rem 0; border-bottom: 1px solid #2d2e35; font-size: .82rem; }
 .gift-config span { color: #cbd0da; }.gift-config em { color: #78c894; font-style: normal; }.gift-config button { margin: 0; padding: .25rem .45rem; font-size: .78rem; }
 .gift-config select { margin: 0; padding: .25rem; font-size: .78rem; }.gift-cooldown { margin-top: .6rem; font-size: .82rem; }
+.gift-test-status { min-height: 1.2rem; margin-top: .4rem; font-size: .82rem; font-weight: 700; }
+.gift-test-status.aguardando { color: #d3ad69; }.gift-test-status.sucesso { color: #78c894; }.gift-test-status.falha { color: #e39a9a; }
 .teste-ativo, .teste-inativo { margin: .5rem 0; font-weight: 700; }
 .teste-ativo { color: #78c894; }
 .teste-inativo { color: #e39a9a; }
@@ -361,6 +363,49 @@ body.live .lista-ultimos { display: none; }
     gap: .28rem;
     z-index: 4;
 }
+.rodape-live {
+    width: min(100%, 720px);
+    margin: 0 auto;
+    padding: 0 .5rem 1.25rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: .7rem;
+    align-items: end;
+}
+.painel-fixo {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    grid-template-rows: auto;
+    gap: .45rem;
+}
+.painel-fixo .painel-ranking,
+.painel-fixo .painel-status {
+    position: static;
+    width: auto;
+    padding: .65rem .75rem;
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+    transition: none;
+    border-radius: .35rem;
+    box-shadow: none;
+}
+.ranking-fixo,
+.guia-live { background: rgba(49, 42, 44, .92); border: 1px solid rgba(250, 250, 255, .16); border-radius: .35rem; }
+.ranking-fixo .painel-cabecalho { margin-bottom: .25rem; }
+.ranking-fixo .painel-cabecalho h2,
+.guia-live .painel-cabecalho h2 { font-size: .75rem; letter-spacing: .08em; }
+.ranking-fixo ol { max-height: 5rem; overflow: hidden; }
+.ranking-fixo li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .35rem; padding: .14rem 0; border: 0; font-size: .72rem; line-height: 1.2; white-space: normal; overflow-wrap: anywhere; }
+.ranking-fixo .pts { font-size: .7rem; }
+.ao-vivo { color: var(--verde-jogo); font-size: .58rem; font-weight: 700; }
+.guia-live { min-height: 5.8rem; padding: .65rem .75rem; overflow: hidden; }
+.guia-live .painel-cabecalho { margin-bottom: .3rem; }
+.guia-live p { min-height: 2.6rem; margin: 0; color: #e2dadd; font-size: .72rem; line-height: 1.35; }
+.guia-live p.guia-troca { animation: guia-entrada .35s ease; }
+.guia-indice { color: #b7aeb4; font-size: .62rem; }
+@keyframes guia-entrada { from { opacity: 0; transform: translateY(.35rem); } to { opacity: 1; transform: none; } }
 .linha-teclas { display: flex; justify-content: center; gap: .28rem; }
 .linha-central { padding-left: 1.1rem; }
 .linha-final { padding: 0 .2rem; }
@@ -417,7 +462,7 @@ body.live .lista-ultimos { display: none; }
 .amostra { display: inline-grid; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: .15rem; color: white; font-weight: 600; }
 .amostra.correta { background: var(--verde-jogo); }.amostra.presente { background: var(--amarelo-jogo); }.amostra.ausente { background: var(--vermelho-jogo); }
 
-body.live .notificacoes { bottom: calc(clamp(2.6rem, 7vh, 4rem) * 3 + 2rem); max-width: min(90%, 28rem); }
+body.live .notificacoes { bottom: 8.5rem; max-width: min(90%, 28rem); }
 body.live .notif { border: 0; border-left: 3px solid #d3ad69; border-radius: .2rem; background: rgba(49, 42, 44, .94); font-size: .85rem; }
 body.live .notif .quem { color: #dcd4d7; }
 body.live .notif .titulo { color: #ead6a3; }
@@ -428,9 +473,8 @@ body.live .aviso .cartel { border: 0; border-radius: .35rem; background: #312a2c
     body.live .topo { padding: 0 .5rem; }
     .botao-icone { width: 1.8rem; height: 1.8rem; }
     .temporizador { font-size: .78rem; }
-    .teclado { padding-bottom: .45rem; gap: .2rem; }
-    .linha-teclas { gap: .2rem; }
-    .linha-central { padding-left: .5rem; }
+    .rodape-live { gap: .35rem; padding: 0 .35rem .45rem; }
+    .painel-fixo { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .35rem; }
 }
 .bonus-status { min-width: 0; color: #ead6a3; font-size: .7rem; font-weight: 700; white-space: nowrap; }
 .bonus-status.ativo { animation: destacar .6s ease; }

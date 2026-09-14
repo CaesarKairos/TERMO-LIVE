@@ -16,9 +16,27 @@ let rodadaAtiva = false;
 let numeroRodada = 1;
 let ws = null;
 let palavraDigitada = "";
+let maxTentativas = 6;
+let guiaAtual = 0;
+const GUIA_ITENS = [
+    ["Como jogar", "Comente uma palavra de 5 letras para dar um palpite."],
+    ["Presentes", "Envie presentes no TikTok para ativar eventos especiais."],
+    ["O que é Pista?", "Revela uma informação segura sobre a palavra, sem mostrar a resposta inteira."],
+    ["Rose", "Pista: revela uma letra ou característica da palavra."],
+    ["Heart", "+10 pontos para quem enviou o presente."],
+    ["Finger Heart", "Revela uma letra na posição correta."],
+    ["Rosa", "Elimina uma letra que não pertence à palavra."],
+    ["Perfume", "Dá uma tentativa extra para o chat."],
+    ["Doughnut", "Radar: mostra uma informação mais específica."],
+    ["Galaxy", "Inicia uma Palavra relâmpago com a palavra atual."],
+    ["Fireworks", "Super pista: três informações seguras."],
+    ["Party Laser", "Executa duas habilidades em sequência."],
+    ["Meteor Shower", "Caos total: combina vários efeitos."],
+    ["Private Jet", "Evento lendário com bônus, pista e tentativa extra."]
+];
 
 const $ = (id) => document.getElementById(String(id).replace(/^#/, ""));
-const MAX_LINHAS = 6;
+const MAX_LINHAS = 10;
 
 // Escapar texto de usuário (anti-XSS)
 function esc(texto) { return String(texto ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
@@ -40,9 +58,17 @@ function processar(msg) {
         case "victory": mostrarVencedor(msg); break;
         case "leaderboard": renderRanking(msg.ranking); break;
         case "gift": notificarPresente(msg); break;
-        case "gift_received": notificarPresente(msg); break;
-        case "ability_started": notificar(msg, msg.username || msg.user || "", "✨ " + (msg.habilidade || "Habilidade") + " ativada"); break;
-        case "ability_completed": if (msg.mensagem) notificar(msg, msg.username || msg.user || "", msg.mensagem); break;
+        case "gift_received":
+            if (msg.configurado === false) notificarPresente(msg);
+            break;
+        case "ability_started": break;
+        case "ability_completed":
+            if (msg.max_tentativas) {
+                maxTentativas = Math.max(6, Number(msg.max_tentativas));
+                renderTabuleiro();
+            }
+            if (msg.mensagem) notificar(msg, msg.username || msg.user || "", msg.mensagem);
+            break;
         case "hint":
         case "hint_result": notificar(msg, msg.username || msg.user || "", "💡 " + (msg.text || msg.mensagem || "Pista")); break;
         case "reveal_letter": revelarLetra(msg); break;
@@ -72,11 +98,12 @@ function processar(msg) {
 function initEstado(st) {
     if (st?.rodada) {
         numeroRodada = st.rodada.numero;
+        maxTentativas = Math.max(6, st.rodada.max_tentativas || 6);
         countdown = st.rodada.relampago ? 30 : 120;
         rodadaAtiva = true;
         $("#numRodada").textContent = numeroRodada;
     }
-    guesses = (st?.palpites || []).slice(-MAX_LINHAS);
+    guesses = (st?.palpites || []).slice(-maxTentativas);
     revealed = {};
     for (const i of (st?.reveladas || [])) revealed[i] = "";
     eliminated = new Set(st?.eliminadas || []);
@@ -95,6 +122,7 @@ function novaRodada(msg) {
     eliminated = new Set();
     countdown = msg.duracao || 120;
     numeroRodada = msg.round?.numero || numeroRodada + 1;
+    maxTentativas = Math.max(6, msg.round?.max_tentativas || 6);
     $("#numRodada").textContent = numeroRodada;
     ocultarAviso();
         renderTabuleiro();
@@ -108,7 +136,7 @@ function novaRodada(msg) {
 function adicionarPalpite(info) {
     if (info) {
         guesses.push(info);
-        if (guesses.length > MAX_LINHAS) guesses.shift();
+        if (guesses.length > maxTentativas) guesses.shift();
     }
     renderTabuleiro();
     atualizarTeclado();
@@ -132,7 +160,9 @@ function adicionarPalpite(info) {
 function renderTabuleiro() {
     const tabuleiro = $("#tabuleiro");
     tabuleiro.innerHTML = "";
-    for (let r = 0; r < MAX_LINHAS; r++) {
+    tabuleiro.style.gridTemplateRows = `repeat(${maxTentativas}, 1fr)`;
+    tabuleiro.style.aspectRatio = `5 / ${maxTentativas}`;
+    for (let r = 0; r < maxTentativas; r++) {
         const linha = document.createElement("div");
         linha.className = "linha" + (r === guesses.length - 1 ? (guesses.length ? " nova" : "") : "");
         const g = r < guesses.length ? guesses[r] : null;
@@ -149,7 +179,11 @@ function renderTabuleiro() {
                 celula.textContent = "";
                 celula.style.opacity = "0.6";
             }
-            if (revealed[c] && !g) { celula.textContent = revealed[c].toUpperCase(); celula.classList.add("revelada"); }
+            if (revealed[c] && !g) {
+                celula.textContent = revealed[c].toUpperCase();
+                celula.classList.remove("ausente");
+                celula.classList.add("revelada", "correct");
+            }
             linha.appendChild(celula);
         }
         tabuleiro.appendChild(linha);
@@ -179,6 +213,8 @@ function atualizarTeclado() {
             if (!estados[letra]) estados[letra] = "ausente";
         }
     }
+    for (const pos of Object.keys(revealed)) estados[revealed[pos].toUpperCase()] = "correct";
+    for (const letra of eliminated) if (!estados[letra.toUpperCase()]) estados[letra.toUpperCase()] = "absent";
     document.querySelectorAll("[data-letra]").forEach((tecla) => {
         tecla.classList.remove("correta", "presente", "ausente");
         const estado = estados[tecla.dataset.letra];
@@ -203,6 +239,21 @@ function atualizarBonus(bonus) {
         indicador.textContent = "";
         indicador.classList.remove("ativo");
     }
+}
+
+function atualizarGuia() {
+    const item = GUIA_ITENS[guiaAtual % GUIA_ITENS.length];
+    const titulo = $("guiaTitulo");
+    const texto = $("guiaTexto");
+    const indice = $("guiaIndice");
+    if (!titulo || !texto || !indice) return;
+    titulo.textContent = item[0];
+    texto.textContent = item[1];
+    texto.classList.remove("guia-troca");
+    void texto.offsetWidth;
+    texto.classList.add("guia-troca");
+    indice.textContent = (guiaAtual % GUIA_ITENS.length + 1) + "/" + GUIA_ITENS.length;
+    guiaAtual++;
 }
 
 function renderUltimos(lista) {
@@ -252,12 +303,14 @@ function revelarLetra(msg) {
     revealed[msg.pos] = msg.letra;
     notificar(msg, msg.username || msg.user || "", "🔎 " + (msg.text || msg.mensagem || "Letra revelada: " + msg.letra));
     renderTabuleiro();
+    atualizarTeclado();
 }
 
 function eliminarLetra(msg) {
     if (msg.letra) eliminated.add(String(msg.letra).toLowerCase());
     notificar(msg, msg.username || msg.user || "", "🚫 " + (msg.text || msg.mensagem || "Letra eliminada"));
     renderTabuleiro();
+    atualizarTeclado();
 }
 
 function casoCorreto(msg) {
@@ -284,7 +337,7 @@ function notificarPresente(msg) {
     const n = document.createElement("div");
     n.className = "notif";
     const q = document.createElement("span"); q.className = "quem"; q.textContent = esc(msg.username || msg.user || "") + " enviou " + esc(msg.gift_name || msg.presente || "");
-    const t = document.createElement("span"); t.className = "titulo"; t.textContent = esc(msg.habilidade || msg.mensagem || "");
+    const t = document.createElement("span"); t.className = "titulo"; t.textContent = esc(msg.habilidade || msg.mensagem || "Presente recebido");
     n.appendChild(q); n.appendChild(t);
     cont.prepend(n);
     while (cont.children.length > 4) cont.removeChild(cont.lastChild);
@@ -307,6 +360,8 @@ setInterval(() => {
 
 // =================== Conectar ===================
 conectar();
+atualizarGuia();
+setInterval(atualizarGuia, 4200);
 
 function processarTecla(valor) {
     if (valor === "apagar") palavraDigitada = palavraDigitada.slice(0, -1);
@@ -330,7 +385,7 @@ document.addEventListener("keydown", (evento) => {
 });
 
 const alternarPainel = (id) => $(id)?.classList.toggle("aberto");
-$("botaoRanking").addEventListener("click", () => alternarPainel("painelRanking"));
+$("botaoRanking").addEventListener("click", () => document.querySelector(".ranking-fixo")?.scrollIntoView({ behavior: "smooth", block: "nearest" }));
 $("botaoStatus").addEventListener("click", () => alternarPainel("painelStatus"));
 document.querySelectorAll(".fechar-painel").forEach((botao) => botao.addEventListener("click", () => {
     botao.closest("aside")?.classList.remove("aberto");

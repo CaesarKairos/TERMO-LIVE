@@ -16,6 +16,43 @@ async function api(method, url, body) {
 
 function post(url, body) { return api("POST", url, body); }
 
+async function enviarPresenteTeste() {
+    const presente = el("giftSel").value;
+    const status = el("giftTestStatus");
+    if (status) {
+        status.className = "gift-test-status aguardando";
+        status.textContent = "Enviando " + presente + "...";
+    }
+    try {
+        const result = await post("/api/admin/testar-presente", { gift: presente });
+        const sucesso = result.ok === true;
+        const mensagem = sucesso
+            ? "✓ " + presente + " ativou " + (result.habilidade || "a habilidade") + "."
+            : "✕ " + presente + ": " + traduzirMotivo(result.motivo);
+        if (status) {
+            status.className = "gift-test-status " + (sucesso ? "sucesso" : "falha");
+            status.textContent = mensagem;
+        }
+        log("Teste de presente: " + JSON.stringify(result));
+    } catch (erro) {
+        if (status) {
+            status.className = "gift-test-status falha";
+            status.textContent = "✕ Não foi possível comunicar com o servidor.";
+        }
+        log("Erro ao testar presente: " + erro);
+    }
+}
+
+function traduzirMotivo(motivo) {
+    return {
+        cooldown: "aguarde o cooldown",
+        "rodada-inativa": "não há uma rodada ativa",
+        desativado: "presente desativado",
+        "nao-configurado": "presente não configurado",
+        "sem-presente": "nenhum presente selecionado"
+    }[motivo] || motivo || "não ativado";
+}
+
 function log(msg) {
     const box = el("testLog");
     if (!box) return;
@@ -176,4 +213,5 @@ window.post = post;
 window.enviarComando = enviarComando;
 window.simular = simular;
 window.salvarCooldown = salvarCooldown;
+window.enviarPresenteTeste = enviarPresenteTeste;
 window.el = el;

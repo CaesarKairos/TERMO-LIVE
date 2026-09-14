@@ -61,7 +61,8 @@
                 <option value="Meteor Shower">Meteor Shower</option>
                 <option value="Private Jet">Private Jet</option>
             </select>
-            <button onclick="post('/api/admin/testar-presente', {gift: el('giftSel').value})">Enviar teste</button>
+            <button type="button" onclick="enviarPresenteTeste()">Enviar teste</button>
+            <div id="giftTestStatus" class="gift-test-status" aria-live="polite"></div>
         </section>
 
         <section>

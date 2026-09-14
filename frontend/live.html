@@ -11,7 +11,7 @@
     <!-- ================= CABEÇALHO compacto ================= -->
         <header class="topo">
             <div class="topo-lateral topo-esquerda">
-                <button class="botao-icone" type="button" aria-label="Abrir ranking" title="Abrir ranking" id="botaoRanking">↑</button>
+                <button class="botao-icone" type="button" aria-label="Ir para o ranking" title="Ranking ao vivo" id="botaoRanking">↑</button>
                 <button class="botao-icone" type="button" aria-label="Ajuda" title="Ajuda" id="botaoAjuda">?</button>
             </div>
             <h1 class="titulo">TERMO <span>LIVE</span></h1>
@@ -37,22 +37,18 @@
             </section>
         </main>
 
-        <section class="teclado" aria-label="Teclado do jogo" id="teclado">
-            <div class="linha-teclas">
-                <button type="button" data-letra="Q">Q</button><button type="button" data-letra="W">W</button><button type="button" data-letra="E">E</button><button type="button" data-letra="R">R</button><button type="button" data-letra="T">T</button><button type="button" data-letra="Y">Y</button><button type="button" data-letra="U">U</button><button type="button" data-letra="I">I</button><button type="button" data-letra="O">O</button><button type="button" data-letra="P">P</button>
-            </div>
-            <div class="linha-teclas linha-central">
-                <button type="button" data-letra="A">A</button><button type="button" data-letra="S">S</button><button type="button" data-letra="D">D</button><button type="button" data-letra="F">F</button><button type="button" data-letra="G">G</button><button type="button" data-letra="H">H</button><button type="button" data-letra="J">J</button><button type="button" data-letra="K">K</button><button type="button" data-letra="L">L</button><button class="tecla-comando" type="button" data-comando="apagar" aria-label="Apagar" title="Apagar">⌫</button>
-            </div>
-            <div class="linha-teclas linha-final">
-                <button type="button" data-letra="Z">Z</button><button type="button" data-letra="X">X</button><button type="button" data-letra="C">C</button><button type="button" data-letra="V">V</button><button type="button" data-letra="B">B</button><button type="button" data-letra="N">N</button><button type="button" data-letra="M">M</button><button class="tecla-enter" type="button" data-comando="enviar">ENTER</button>
-            </div>
-        </section>
-
-        <aside class="painel-ranking" id="painelRanking" aria-label="Ranking">
-            <div class="painel-cabecalho"><h2>Ranking</h2><button class="fechar-painel" type="button" aria-label="Fechar ranking">×</button></div>
-            <ol id="listaRanking"></ol>
+    <div class="rodape-live">
+        <aside class="painel-fixo" aria-label="Informações da transmissão">
+            <section class="ranking-fixo" id="painelRanking" aria-label="Ranking">
+                <div class="painel-cabecalho"><h2>Ranking</h2><span class="ao-vivo">AO VIVO</span></div>
+                <ol id="listaRanking"></ol>
+            </section>
+            <section class="guia-live" aria-live="polite">
+                <div class="painel-cabecalho"><h2 id="guiaTitulo">Como jogar</h2><span class="guia-indice" id="guiaIndice">1/2</span></div>
+                <p id="guiaTexto">Comente uma palavra de 5 letras para dar um palpite.</p>
+            </section>
         </aside>
+    </div>
 
         <aside class="painel-status" id="painelStatus" aria-label="Status da rodada">
             <div class="painel-cabecalho"><h2>Status</h2><button class="fechar-painel" type="button" aria-label="Fechar status">×</button></div>
@@ -66,6 +62,8 @@
             <p>Envie uma palavra de cinco letras no chat. As cores mostram o resultado de cada letra.</p>
             <div class="legenda"><span class="amostra correta">A</span> posição correta <span class="amostra presente">A</span> outra posição <span class="amostra ausente">A</span> não aparece</div>
         </dialog>
+
+    <div class="notificacoes" id="notificacoes" aria-live="polite"></div>
 
     <!-- Aviso central (vencedor / nova rodada) -->
     <div class="aviso" id="aviso"></div>
